@@ -1,0 +1,40 @@
+# Executa o crawler do Noticias Agricolas todo dia util e versiona os dados coletados.
+# Obs.: so roda quando este diretorio for a raiz de um repositorio no GitHub.
+name: Coleta diaria de cotacoes
+
+on:
+  schedule:
+    - cron: "0 22 * * 1-5"   # 19h (Brasilia), apos o fechamento do indicador Cepea
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  coleta:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Crawler (Noticias Agricolas) e APIs leves
+        env:
+          CRAWLER_CONTATO: ${{ vars.CRAWLER_CONTATO }}
+        run: |
+          python -m src.coleta.noticias_agricolas
+          python -m src.coleta.bcb
+
+      - name: Versionar dados novos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/raw/noticias_agricolas data/raw/bcb
+          git diff --cached --quiet || git commit -m "dados: coleta automatica $(date -u +%F)"
+          git push

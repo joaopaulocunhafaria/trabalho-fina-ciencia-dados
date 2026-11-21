@@ -1,0 +1,13 @@
+produto,alvo,modelo,MAE,RMSE,R2
+cafe,nivel,baseline_media,533.458,576.785,-7.249
+cafe,nivel,linear,595.113,643.83,-9.537
+cafe,nivel,random_forest,639.141,693.702,-9.821
+cafe,var_21d,baseline_media,8.119,10.605,-0.256
+cafe,var_21d,linear,9.889,12.094,-0.735
+cafe,var_21d,random_forest,8.915,11.087,-0.39
+soja,nivel,baseline_media,23.207,25.064,-10.312
+soja,nivel,linear,28.722,31.828,-17.27
+soja,nivel,random_forest,23.683,28.01,-10.728
+soja,var_21d,baseline_media,3.896,5.053,-0.224
+soja,var_21d,linear,4.801,5.891,-0.745
+soja,var_21d,random_forest,4.839,6.018,-0.964

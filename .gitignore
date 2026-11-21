@@ -1,0 +1,12 @@
+# Ambiente
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Arquivos grandes do INMET (os CSVs das estacoes selecionadas ficam versionados)
+data/raw/inmet/zips/
+
+# Logs
+*.log
