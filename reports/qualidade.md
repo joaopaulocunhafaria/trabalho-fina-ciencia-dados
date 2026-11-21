@@ -1,19 +1,19 @@
 # Relatório de qualidade dos dados
 
-Gerado a partir de `data/processed/base_integrada.csv` (1723 dias úteis).
+Gerado a partir de `data/processed/base_integrada.csv` (1728 dias úteis).
 
 ## Cobertura por variável
 
 | variavel | inicio | fim | observacoes | faltantes_pct |
 |---|---|---|---|---|
-| preco_cafe | 2020-01-02 | 2026-11-12 | 1723 | 0.0 |
-| preco_soja | 2020-01-02 | 2026-11-12 | 1723 | 0.0 |
-| dolar | 2020-01-02 | 2026-11-03 | 1716 | 0.4 |
-| cafe_ice_usd_saca | 2020-01-02 | 2026-11-04 | 1717 | 0.3 |
-| soja_cbot_usd_saca | 2020-01-02 | 2026-11-04 | 1717 | 0.3 |
-| ipca_mensal | 2020-01-02 | 2026-09-30 | 1694 | 1.7 |
-| chuva_mm | 2020-01-02 | 2026-10-21 | 1708 | 0.9 |
-| temp_med | 2020-01-02 | 2026-10-21 | 1708 | 0.9 |
+| preco_cafe | 2020-01-02 | 2026-11-19 | 1728 | 0.0 |
+| preco_soja | 2020-01-02 | 2026-11-19 | 1728 | 0.0 |
+| dolar | 2020-01-02 | 2026-11-19 | 1728 | 0.0 |
+| cafe_ice_usd_saca | 2020-01-02 | 2026-11-19 | 1728 | 0.0 |
+| soja_cbot_usd_saca | 2020-01-02 | 2026-11-19 | 1728 | 0.0 |
+| ipca_mensal | 2020-01-02 | 2026-10-30 | 1715 | 0.8 |
+| chuva_mm | 2020-01-02 | 2026-11-18 | 1727 | 0.1 |
+| temp_med | 2020-01-02 | 2026-11-18 | 1727 | 0.1 |
 
 ## Maiores lacunas — preco_cafe
 
@@ -27,7 +27,7 @@ Gerado a partir de `data/processed/base_integrada.csv` (1723 dias úteis).
 
 ## Outliers de variação diária (IQR, k=3) — cafe
 
-4 dias atípicos de 1722. Maiores:
+4 dias atípicos de 1727. Maiores:
 
 
 | data | variacao_1d_pct |
@@ -52,7 +52,7 @@ Verificar se coincidem com eventos reais (ex.: geada de jul/2021) antes de remov
 
 ## Outliers de variação diária (IQR, k=3) — soja
 
-9 dias atípicos de 1722. Maiores:
+9 dias atípicos de 1727. Maiores:
 
 
 | data | variacao_1d_pct |

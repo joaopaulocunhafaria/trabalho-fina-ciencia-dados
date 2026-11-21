@@ -5,7 +5,7 @@ Alvaro Augusto José da Silva e João Paulo da Cunha Faria.
 
 O projeto monta uma base integrada (2020 → hoje) com os preços do café arábica e da soja, a cotação
 do dólar e o clima das três principais regiões cafeeiras de Minas Gerais, e analisa como esses fatores se
-relacionam. O pré-projeto e os slides estão em [`docs/`](docs/).
+relacionam. O pré-projeto está em [`docs/`](docs/); o artigo final (IEEE) em [`docs/artigo/`](docs/artigo/) e os slides da apresentação em [`docs/slides/`](docs/slides/). Para compilar no Overleaf, envie `docs/overleaf_trabalho_final.zip`.
 
 ## Perguntas de pesquisa
 
