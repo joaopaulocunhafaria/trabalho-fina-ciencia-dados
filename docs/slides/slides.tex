@@ -1,0 +1,359 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{blocks}[rounded][shadow=false]
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazilian]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{xcolor}
+
+\graphicspath{{../artigo/figuras/}}
+
+\title[Café e Soja $\times$ Dólar $\times$ Clima]{Preço do Café e da Soja $\times$ Dólar $\times$ Clima}
+\subtitle{uma análise de dados das commodities agrícolas mineiras}
+\author[Alvaro \& João Paulo]{Alvaro Augusto José da Silva \and João Paulo da Cunha Faria}
+\institute[CEFET-MG]{Ciência de Dados -- Engenharia de Computação\\CEFET-MG, Campus Divinópolis}
+\date{Novembro de 2026}
+
+\begin{document}
+
+% 1 ------------------------------------------------------------------
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% 2 ------------------------------------------------------------------
+\begin{frame}{Roteiro}
+  \tableofcontents
+\end{frame}
+
+% =====================================================================
+\section{Introdução e problema}
+
+\begin{frame}{Introdução}
+  \begin{itemize}
+    \item Brasil: maior produtor e exportador de café; um dos maiores de soja
+    \item Minas Gerais produz $\approx$ metade do café do país\\
+          (Sul de Minas, Cerrado Mineiro, Matas de Minas)
+    \item Café e soja são cotados em \textbf{dólar}, e a safra depende do \textbf{clima}
+    \item Os dados são públicos, mas estão \textbf{espalhados} em sites, planilhas e APIs
+  \end{itemize}
+  \vspace{0.3cm}
+  \begin{block}{Ideia}
+    Montar uma base única (2020--2026) com preço, câmbio e clima e analisar como esses fatores se
+    relacionam.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Problema e perguntas de pesquisa}
+  \begin{enumerate}
+    \item[P1.] Como os preços do café e da soja evoluíram entre 2020 e 2026?
+    \item[P2.] Existe sazonalidade (safra $\times$ entressafra)?
+    \item[P3.] Os preços acompanham o dólar? Com que defasagem?
+    \item[P4.] Pouca chuva ou calor nas regiões produtoras antecedem alta do café?
+    \item[P5.] Qual foi o impacto da geada de julho de 2021?
+    \item[P6.] Qual commodity é mais sensível ao clima? E ao câmbio?
+  \end{enumerate}
+  \vspace{0.2cm}
+  \small A soja entra como \textbf{comparação}: é produzida no país inteiro e depende mais do mercado
+  internacional.
+\end{frame}
+
+\begin{frame}{Objetivos}
+  \textbf{Geral:} analisar a relação entre preço, dólar e clima por meio de coleta, tratamento,
+  visualização e aprendizado de máquina.
+
+  \vspace{0.2cm}
+  \textbf{Específicos:}
+  \begin{itemize}
+    \item \emph{Crawler} diário automatizado (Notícias Agrícolas + GitHub Actions)
+    \item Séries históricas de preço, câmbio, inflação e clima desde 2020
+    \item Base integrada por data com atributos defasados
+    \item Gráficos para P1--P6 e painel interativo
+    \item Regressão Linear e \emph{Random Forest} para explicar os preços
+    \item Repositório público e reprodutível
+  \end{itemize}
+\end{frame}
+
+% =====================================================================
+\section{Metodologia}
+
+\begin{frame}{Extração de dados}
+  \small
+  \begin{tabular}{@{}lll@{}}
+    \toprule
+    Fonte & Dado & Técnica \\
+    \midrule
+    Notícias Agrícolas & Indicador Cepea/Esalq café e soja & \textbf{Web scraping} (requests + BS4) \\
+    CEPEA/Esalq & Séries históricas (validação) & Planilha, download manual \\
+    Banco Central (SGS) & Dólar e IPCA & \textbf{API REST} \\
+    NASA POWER & Chuva, temperatura, umidade & \textbf{API REST} \\
+    INMET & Estações automáticas (validação) & \textbf{Download} ZIP/CSV \\
+    Yahoo Finance & Futuros ICE e CBOT & API (\texttt{yfinance}) \\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.3cm}
+  \begin{itemize}
+    \item Histórico desde 2020: \emph{backfill} pelas páginas por data ($\approx$3 h, retomável)
+    \item Coleta diária: GitHub Actions, todo dia útil às 19h
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Ética e legalidade}
+  \begin{itemize}
+    \item \texttt{robots.txt} consultado antes de cada acesso
+    \item \emph{User-Agent} descritivo + 3 s entre requisições
+    \item Se o site bloquear (403/429), o \emph{crawler} \textbf{para}: sem contornar bloqueios
+    \item Dados de mercado e clima, não pessoais (LGPD não se aplica)
+  \end{itemize}
+  \vspace{0.3cm}
+  \begin{alertblock}{Caso CEPEA}
+    O portal recusa downloads automatizados e o \texttt{robots.txt} veta agentes de IA
+    (\texttt{ClaudeBot}, \texttt{anthropic-ai}\ldots). Por isso as planilhas foram baixadas à mão e usadas
+    só para \textbf{validação}.
+  \end{alertblock}
+\end{frame}
+
+\begin{frame}{Natureza e tratamento dos dados}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Tipos}
+      \begin{itemize}\small
+        \item Séries temporais estruturadas (CSV/JSON) e semiestruturadas (HTML)
+        \item Contínuas: preço, dólar, chuva, temperatura
+        \item Discretas: dias secos, ano, mês
+        \item Categóricas: produto, região, período de safra
+      \end{itemize}
+      \textbf{Categóricas}
+      \begin{itemize}\small
+        \item Região $\rightarrow$ colunas (formato largo)
+        \item Produto $\rightarrow$ um modelo por commodity
+        \item Safra $\rightarrow$ agrupamento e teste
+        \item Mês $\rightarrow$ seno/cosseno (cíclico)
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Tratamento}
+      \begin{itemize}\small
+        \item ``R\$ 1.234,56'' $\rightarrow$ 1234.56; sentinelas -999 $\rightarrow$ NaN
+        \item Índice de dias úteis; chuva do fim de semana somada à segunda-feira
+        \item \emph{Forward fill} de no máximo 3 dias
+        \item \emph{Outliers} (IQR) conferidos e mantidos (eventos reais)
+        \item Atributos: chuva em 30/90/180 d, dias secos, dólar defasado em 1/5/20 d
+        \item Deflação pelo IPCA
+      \end{itemize}
+      \alert{1.728 dias úteis (jan/2020 -- nov/2026)}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Qualidade dos dados}
+  \begin{block}{Notícias Agrícolas $\times$ CEPEA ($\approx$1.700 dias em comum)}
+    Diferença média: \textbf{R\$ 0,00} (café) e \textbf{R\$ 0,0004} (soja): o \emph{crawler} reproduz o
+    indicador oficial.
+  \end{block}
+  \begin{block}{NASA POWER $\times$ INMET}
+    Correlação da chuva mensal: \textbf{0,86--0,95}; da temperatura média: \textbf{0,85--0,93}.\\
+    A NASA é $\approx$1 °C mais quente nas mínimas: a grade de 50 km suaviza as geadas.
+  \end{block}
+  \begin{block}{Testes automatizados}
+    21 testes \texttt{pytest}: \emph{parsers}, tratamento e ausência de vazamento temporal.
+  \end{block}
+\end{frame}
+
+\begin{frame}{Visualização e machine learning}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Visualização}
+      \begin{itemize}\small
+        \item \texttt{matplotlib} + \texttt{seaborn}: figuras de P1--P6
+        \item \texttt{plotly} + \texttt{Streamlit}: painel com filtros
+        \item Paleta fixa e segura para daltonismo
+        \item Índice base 100 em vez de eixo duplo
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \textbf{Modelos} (\texttt{scikit-learn})
+      \begin{itemize}\small
+        \item Regressão Linear e \emph{Random Forest}
+        \item Alvos: nível do preço e variação em 21 dias
+        \item Grupos: câmbio, clima (defasado 21 d), sazonalidade
+        \item \texttt{TimeSeriesSplit} (5 folds) + \emph{baseline}
+        \item Objetivo: \textbf{explicar}, não prever
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Resultados}
+
+\begin{frame}{P1 -- Evolução dos preços}
+  \centering
+  \includegraphics[height=0.68\textheight]{p1_evolucao_precos.png}
+
+  \small Café: R\$ 534 $\rightarrow$ R\$ 1.709 (\textbf{mais que o triplo}; recorde de R\$ 2.769 em 2025).
+  Soja: pico em 2022 e depois recuo.
+\end{frame}
+
+\begin{frame}{P2 -- Sazonalidade}
+  \begin{columns}[c]
+    \begin{column}{0.62\textwidth}
+      \includegraphics[width=\textwidth]{p2_sazonalidade.png}
+    \end{column}
+    \begin{column}{0.36\textwidth}
+      \small
+      \begin{itemize}
+        \item Kruskal-Wallis: $p<10^{-13}$ para os dois
+        \item Café mais barato em jun--jul (colheita), índice $\approx$94
+        \item Soja mais barata em fev--jun e mais cara em set--nov
+        \item Efeito real, mas pequeno perto das tendências
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{P3 -- Preço $\times$ dólar}
+  \centering
+  \includegraphics[width=0.9\textwidth]{p3_preco_dolar.png}
+
+  \small \textbf{Soja} reage ao dólar \textbf{no mesmo dia} ($\rho=0{,}34$); o \textbf{café} quase não
+  reage ($\rho\le0{,}06$).\\
+  Repasse mensal $\approx$50\% nos dois, mas o dólar explica só 14\% (soja) e 5\% (café) da variação.
+\end{frame}
+
+\begin{frame}{P4 -- Clima $\times$ preço do café}
+  \begin{columns}[c]
+    \begin{column}{0.55\textwidth}
+      \includegraphics[width=\textwidth]{p4_clima_regioes.png}
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \small
+      Spearman: clima hoje $\times$ variação do preço nos próximos 3 meses
+      \begin{itemize}
+        \item Calor no Cerrado Mineiro: $\rho=+0{,}34$
+        \item Chuva de 90 d no Cerrado: $\rho=-0{,}26$
+      \end{itemize}
+      \alert{Períodos quentes e secos antecedem altas.}\\[4pt]
+      Associação moderada, e parte dela vem do calendário.
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{P5 -- Geada de julho de 2021}
+  \begin{columns}[c]
+    \begin{column}{0.6\textwidth}
+      \includegraphics[width=\textwidth]{p5_geada_2021.png}
+    \end{column}
+    \begin{column}{0.38\textwidth}
+      \small
+      \begin{tabular}{@{}lrr@{}}
+        \toprule
+        & Café & Soja \\
+        \midrule
+        30 dias & +20,9\% & +5,9\% \\
+        90 dias & +28,4\% & +6,3\% \\
+        180 dias & \textbf{+46,9\%} & +6,1\% \\
+        \bottomrule
+      \end{tabular}
+      \vspace{0.2cm}
+      \begin{itemize}
+        \item Soja como \textbf{grupo de controle}
+        \item Pico de +80\% em fev/2022
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{P6 -- Clima ou câmbio?}
+  \centering
+  \includegraphics[width=0.85\textwidth]{p6_correlacoes.png}
+
+  \small \textbf{Soja}: mais sensível ao \textbf{câmbio} no curto prazo. \quad
+  \textbf{Café}: mais sensível ao \textbf{clima} (geada com impacto 8$\times$ maior).
+\end{frame}
+
+\begin{frame}{P6 -- Modelos}
+  \begin{columns}[c]
+    \begin{column}{0.5\textwidth}
+      \includegraphics[width=\textwidth]{p6_importancia_grupos.png}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \small
+      \begin{itemize}
+        \item Câmbio pesa 47\% no nível do café e 20\% no da soja (RF)
+        \item $R^2$ de ajuste: RF 0,93--0,98; Linear 0,09--0,35
+        \item \alert{Fora da amostra: nenhum modelo superou o baseline} ($R^2<0$)
+        \item Cada \emph{fold} de teste é um regime novo (recorde de 2024--25)
+        \item Fatores fora do estudo dominam a previsão
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% =====================================================================
+\section{Repositório e conclusão}
+
+\begin{frame}{Repositório}
+  \small
+  \url{https://github.com/joaopaulocunhafaria/trabalho-fina-ciencia-dados}
+  \vspace{0.2cm}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}
+        \item \texttt{src/}: coleta, tratamento, análise, modelagem
+        \item \texttt{data/}: raw $\rightarrow$ interim $\rightarrow$ processed
+        \item \texttt{notebooks/}: coleta, EDA, modelagem
+        \item \texttt{reports/}: figuras, tabelas, métricas
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{itemize}
+        \item \texttt{app/}: painel Streamlit
+        \item \texttt{tests/}: 21 testes
+        \item \texttt{.github/workflows}: coleta diária
+        \item \texttt{make tudo} reproduz o projeto inteiro
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Mudanças em relação ao pré-projeto}
+  \begin{itemize}
+    \item \textbf{CEPEA $\rightarrow$ validação}: bloqueio a downloads automatizados; histórico pelo Notícias
+          Agrícolas (mesmo indicador)
+    \item \textbf{Sem Selenium}: as tabelas estão no HTML estático
+    \item \textbf{Ambiente local + Makefile em vez do Colab}: reprodutibilidade e automação
+    \item \textbf{Adicionados}: \texttt{yfinance}, \texttt{SciPy}/\texttt{statsmodels}, \texttt{pytest}
+    \item \textbf{Índice base 100} em vez de gráfico de eixo duplo
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Conclusão}
+  \begin{itemize}
+    \item Base integrada e validada de quase 7 anos, com coleta ética e automática
+    \item Café: alta de mais de 3$\times$, muito sensível ao \textbf{clima} (geada: +47\% em 6 meses)
+    \item Soja: acompanha o \textbf{dólar} no mesmo dia
+    \item Sazonalidade significativa nos dois produtos
+    \item Os modelos ajudam a \textbf{explicar}, não a \textbf{prever}
+  \end{itemize}
+  \vspace{0.2cm}
+  \textbf{Limitações:} correlação não é causalidade; um ponto de clima por região; faltam estoques e
+  produção mundial.\\
+  \textbf{Futuro:} incluir esses dados e modelos de séries temporais (ARIMAX).
+\end{frame}
+
+\begin{frame}
+  \centering
+  \Huge Obrigado!\\[0.5cm]
+  \large Perguntas?\\[0.5cm]
+  \small Demonstração: \texttt{streamlit run app/streamlit\_app.py}
+\end{frame}
+
+\end{document}
