@@ -65,7 +65,7 @@ col_preco = f"preco_{produto}" + ("_real" if real else "")
 sufixo = "" if regiao == "media" else f"_{regiao}"
 
 st.title("Café e Soja × Dólar × Clima")
-st.caption("Commodities agrícolas mineiras — CEFET-MG, Ciência de Dados")
+st.caption("Commodities agrícolas mineiras — UFCIMG, Ciência de Dados")
 
 ultimo = df.dropna(subset=[f"preco_{produto}"]).iloc[-1] if df[f"preco_{produto}"].notna().any() else None
 c1, c2, c3, c4 = st.columns(4)

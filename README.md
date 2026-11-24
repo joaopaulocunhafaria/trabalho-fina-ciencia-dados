@@ -1,6 +1,6 @@
 # Preço do Café e da Soja × Dólar × Clima
 
-Trabalho final de **Ciência de Dados** (Engenharia de Computação, CEFET-MG, Divinópolis), por
+Trabalho final de **Ciência de Dados** (Engenharia de Computação, UFCIMG, Divinópolis), por
 Alvaro Augusto José da Silva e João Paulo da Cunha Faria.
 
 O projeto monta uma base integrada (2020 → hoje) com os preços do café arábica e da soja, a cotação
@@ -25,7 +25,7 @@ Todos os arquivos ficam em `reports/` e o painel Streamlit reúne tudo com filtr
 | Fonte | Dado | Técnica | Módulo |
 |---|---|---|---|
 | [Notícias Agrícolas](https://www.noticiasagricolas.com.br/cotacoes/) | Indicador Cepea/Esalq do café arábica e da soja (Paranaguá), R$/saca | Web scraping (requests + BeautifulSoup) | `src/coleta/noticias_agricolas.py` |
-| [CEPEA/ESALQ](https://www.cepea.org.br/) | Séries históricas dos indicadores (validação) | Planilha, download manual | `src/coleta/cepea.py` |
+| [CEPEA/ESALQ](https://www.cepea.org.br/) | Séries históricas dos indicadores (fonte prioritária) | Planilha, download manual | `src/coleta/cepea.py` |
 | [Banco Central — SGS](https://www3.bcb.gov.br/sgspub/) | Dólar comercial venda (série 1), IPCA (série 433) | API REST (JSON) | `src/coleta/bcb.py` |
 | [NASA POWER](https://power.larc.nasa.gov/) | Chuva, temperatura mín./méd./máx., umidade | API REST (JSON) | `src/coleta/nasa_power.py` |
 | [INMET](https://portal.inmet.gov.br/) | Estações automáticas mais próximas (validação do clima) | Download de arquivos (ZIP/CSV) | `src/coleta/inmet.py` |
@@ -129,15 +129,14 @@ câmbio × clima × sazonalidade), não prever preços — R² fora da amostra b
 ## Automação (GitHub Actions)
 
 `.github/workflows/crawler.yml` roda o crawler e a API do BCB todo dia útil às 19h e faz commit dos CSVs.
-O workflow só é executado quando esta pasta é a **raiz** de um repositório no GitHub (hoje ela está dentro
-do repositório geral da faculdade). Para ativar: crie o repositório público do projeto, copie esta pasta
-para a raiz e, opcionalmente, defina a variável `CRAWLER_CONTATO` em *Settings → Variables*.
+Para funcionar, habilite *Settings → Actions → Workflow permissions → Read and write* e, opcionalmente, defina
+a variável `CRAWLER_CONTATO` em *Settings → Variables*.
 
 ## Diferenças em relação ao pré-projeto
 
 - Código em `src/` (em vez de `crawler/`), separado por etapa.
 - O histórico desde 2020 vem das páginas por data do Notícias Agrícolas (mesmo indicador Cepea/Esalq),
-  porque o CEPEA bloqueia downloads automatizados; as planilhas do CEPEA ficam como validação opcional.
+  porque o CEPEA bloqueia downloads automatizados; as planilhas do CEPEA, quando presentes, têm prioridade.
 - Inclusão das cotações internacionais (ICE/CBOT) para comparar preço interno × bolsa × câmbio.
 - Preço × dólar mostrado como índice base 100 em um único eixo, em vez de gráfico de eixo duplo
   (escalas duplas induzem a correlações visuais enganosas).
